@@ -1,0 +1,74 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  tournamentsCreated Tournament[]       @relation("CreatedBy")
+  tournamentPlayers  TournamentPlayer[]
+  reportedMatches    Match[]            @relation("ReportedBy")
+}
+
+model Tournament {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  format      String   // SINGLE_ELIMINATION | DOUBLE_ELIMINATION | ROUND_ROBIN
+  status      String   @default("REGISTRATION") // REGISTRATION | IN_PROGRESS | COMPLETED
+  maxPlayers  Int      @default(16)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy User               @relation("CreatedBy", fields: [createdById], references: [id])
+  players   TournamentPlayer[]
+  matches   Match[]
+}
+
+model TournamentPlayer {
+  id           String   @id @default(cuid())
+  tournamentId String
+  userId       String
+  seed         Int?
+  joinedAt     DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([tournamentId, userId])
+}
+
+model Match {
+  id                 String    @id
+  tournamentId       String
+  round              Int
+  position           Int
+  bracket            String    @default("WINNERS") // WINNERS | LOSERS | GRAND_FINALS
+  player1Id          String?
+  player2Id          String?
+  player1Score       Int?
+  player2Score       Int?
+  winnerId           String?
+  nextMatchId        String?
+  nextMatchSlot      Int?
+  loserNextMatchId   String?
+  loserNextMatchSlot Int?
+  isBye              Boolean   @default(false)
+  reportedById       String?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  reportedBy User?      @relation("ReportedBy", fields: [reportedById], references: [id])
+
+  @@unique([tournamentId, round, position, bracket])
+}
