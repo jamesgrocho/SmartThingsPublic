@@ -23,9 +23,9 @@ model Tournament {
   name        String
   description String?
   format      String   // SINGLE_ELIMINATION | DOUBLE_ELIMINATION | ROUND_ROBIN
-  status      String   @default("REGISTRATION") // REGISTRATION | IN_PROGRESS | COMPLETED
-  matchType   String   @default("S")    // S = singles, D = doubles (for DUPR export)
-  scoreType   String   @default("RALLY") // RALLY | SIDEOUT (for DUPR export)
+  status      String   @default("REGISTRATION")
+  matchType   String   @default("S")
+  scoreType   String   @default("RALLY")
   maxPlayers  Int      @default(16)
   createdById String
   createdAt   DateTime @default(now())
@@ -35,14 +35,14 @@ model Tournament {
   matches   Match[]
 }
 
-// Players are created by the admin (not linked to User accounts)
 model Player {
   id           String   @id @default(cuid())
   tournamentId String
   firstName    String
   lastName     String
-  duprId       String?  // DUPR player ID for export
+  duprId       String?
   seed         Int?
+  checkedIn    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
@@ -53,10 +53,9 @@ model Match {
   tournamentId       String
   round              Int
   position           Int
-  bracket            String    @default("WINNERS") // WINNERS | LOSERS | GRAND_FINALS
-  player1Id          String?   // references Player.id
-  player2Id          String?   // references Player.id
-  // Game-by-game scores (up to 5 games for DUPR export)
+  bracket            String    @default("WINNERS")
+  player1Id          String?
+  player2Id          String?
   game1P1            Int?
   game1P2            Int?
   game2P1            Int?
@@ -73,6 +72,8 @@ model Match {
   loserNextMatchId   String?
   loserNextMatchSlot Int?
   isBye              Boolean   @default(false)
+  courtNumber        Int?
+  status             String    @default("SCHEDULED")
   completedAt        DateTime?
   createdAt          DateTime  @default(now())
 
@@ -86,9 +87,9 @@ model ScoreHistory {
   id           String   @id @default(cuid())
   matchId      String
   reporterName String
-  reporterType String   // "admin" | "player"
-  action       String   // "submitted" | "edited"
-  scoreData    String   // JSON: [{p1,p2}, ...]
+  reporterType String
+  action       String
+  scoreData    String
   createdAt    DateTime @default(now())
 
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)

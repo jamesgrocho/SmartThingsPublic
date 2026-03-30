@@ -17,27 +17,23 @@ export default async function Home() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-950 via-pickle-900/20 to-gray-950 py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-pickle-500/10 border border-pickle-500/20 rounded-full px-4 py-1.5 text-pickle-400 text-sm font-medium mb-6">
-            🏓 Pickleball Tournament Platform
-          </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
-            Run your{" "}
-            <span className="text-pickle-400">Pickleball</span>
+      <section className="py-24 px-6 text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-6xl mb-6">🏓</div>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-5">
+            Run your pickleball
             <br />
-            tournaments online
+            <span className="text-gg-green">tournaments online</span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-            Create brackets, register players, and let everyone report their own
-            scores in real time — single elimination, double elimination, or
-            round robin.
+          <p className="text-gg-muted text-lg max-w-xl mx-auto mb-10">
+            Create brackets, add players, assign courts, and let everyone report
+            scores in real time — single elimination, double elimination, or round robin.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/tournaments/new" className="btn-primary text-lg px-8 py-3">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/tournaments/new" className="btn-primary text-base px-8 py-3">
               Create Tournament
             </Link>
-            <Link href="/tournaments" className="btn-secondary text-lg px-8 py-3">
+            <Link href="/tournaments" className="btn-secondary text-base px-8 py-3">
               Browse Tournaments
             </Link>
           </div>
@@ -45,33 +41,21 @@ export default async function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-16 px-6 border-t border-gray-800">
+      <section className="py-14 px-6 border-t border-gg-border">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-10 text-gray-200">
-            Everything you need to run a great event
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-4">
             {[
-              {
-                icon: "🏆",
-                title: "3 Bracket Formats",
-                desc: "Single elimination, double elimination, and round robin — pick what fits your event.",
-              },
-              {
-                icon: "📊",
-                title: "Live Score Reporting",
-                desc: "Players log in and submit their own match results. Brackets update instantly.",
-              },
-              {
-                icon: "👥",
-                title: "Player Registration",
-                desc: "Open registration lets players join and claim their spot with just an account.",
-              },
+              { icon: "⚡", title: "3 Bracket Formats", desc: "Single elim, double elim, and round robin. Pick what fits your event." },
+              { icon: "🎾", title: "Court Assignment", desc: "Assign court numbers to matches. Players always know where to go." },
+              { icon: "📊", title: "Live Score Reporting", desc: "Players scan a QR code and submit scores directly from their phone." },
+              { icon: "✅", title: "Player Check-In", desc: "Mark players as checked in. No-shows are easy to spot." },
+              { icon: "📤", title: "DUPR Export", desc: "One-click CSV export in the exact format DUPR requires for upload." },
+              { icon: "🔗", title: "Score History", desc: "Every score edit is logged — who reported it and when." },
             ].map((f) => (
-              <div key={f.title} className="card text-center">
-                <div className="text-4xl mb-3">{f.icon}</div>
-                <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-400 text-sm">{f.desc}</p>
+              <div key={f.title} className="card-sm">
+                <div className="text-3xl mb-3">{f.icon}</div>
+                <h3 className="font-semibold text-white mb-1">{f.title}</h3>
+                <p className="text-gg-muted text-sm">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -80,11 +64,11 @@ export default async function Home() {
 
       {/* Recent tournaments */}
       {recent.length > 0 && (
-        <section className="py-12 px-6 border-t border-gray-800">
+        <section className="py-12 px-6 border-t border-gg-border">
           <div className="max-w-5xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-200">Recent Tournaments</h2>
-              <Link href="/tournaments" className="text-pickle-400 hover:text-pickle-300 text-sm">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="font-bold text-white">Recent Tournaments</h2>
+              <Link href="/tournaments" className="text-gg-green hover:text-green-400 text-sm">
                 View all →
               </Link>
             </div>

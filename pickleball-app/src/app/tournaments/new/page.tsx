@@ -5,24 +5,9 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 const FORMATS = [
-  {
-    value: "SINGLE_ELIMINATION",
-    label: "Single Elimination",
-    icon: "⚡",
-    desc: "Lose once and you're out. Fast and decisive.",
-  },
-  {
-    value: "DOUBLE_ELIMINATION",
-    label: "Double Elimination",
-    icon: "🔄",
-    desc: "Two losses to be eliminated. More second chances.",
-  },
-  {
-    value: "ROUND_ROBIN",
-    label: "Round Robin",
-    icon: "🔃",
-    desc: "Everyone plays everyone. Best overall record wins.",
-  },
+  { value: "SINGLE_ELIMINATION", label: "Single Elimination", icon: "⚡", desc: "One loss and you're out." },
+  { value: "DOUBLE_ELIMINATION", label: "Double Elimination", icon: "🔄", desc: "Two losses to be eliminated." },
+  { value: "ROUND_ROBIN",        label: "Round Robin",        icon: "🔃", desc: "Everyone plays everyone." },
 ];
 
 export default function NewTournamentPage() {
@@ -30,20 +15,20 @@ export default function NewTournamentPage() {
   const router = useRouter();
   const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
 
-  const [name, setName] = useState("");
+  const [name,        setName]        = useState("");
   const [description, setDescription] = useState("");
-  const [format, setFormat] = useState("SINGLE_ELIMINATION");
-  const [matchType, setMatchType] = useState("S");
-  const [scoreType, setScoreType] = useState("RALLY");
-  const [maxPlayers, setMaxPlayers] = useState(16);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [format,      setFormat]      = useState("SINGLE_ELIMINATION");
+  const [matchType,   setMatchType]   = useState("S");
+  const [scoreType,   setScoreType]   = useState("RALLY");
+  const [maxPlayers,  setMaxPlayers]  = useState(16);
+  const [error,       setError]       = useState("");
+  const [loading,     setLoading]     = useState(false);
 
   if (status === "loading") return null;
   if (!session || !isAdmin) {
     return (
       <div className="max-w-md mx-auto px-6 py-20 text-center">
-        <p className="text-gray-400 mb-4">Admin access required to create tournaments.</p>
+        <p className="text-gg-muted mb-4">Admin access required.</p>
         <Link href="/login" className="btn-primary">Sign in</Link>
       </div>
     );
@@ -65,77 +50,79 @@ export default function NewTournamentPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
+    <div className="max-w-lg mx-auto px-4 py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">New Tournament</h1>
-        <p className="text-gray-400 mt-1">Set up your pickleball event</p>
+        <h1 className="text-2xl font-bold text-white">New Tournament</h1>
+        <p className="text-gg-muted text-sm mt-1">Set up your pickleball event</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">{error}</div>
+          <div className="bg-gg-error-dim border border-gg-error/30 rounded-xl p-3 text-red-400 text-sm">
+            {error}
+          </div>
         )}
 
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-200">Basic Info</h2>
+          <h2 className="text-sm font-semibold text-gg-muted uppercase tracking-widest">Details</h2>
           <div>
             <label className="label">Tournament Name *</label>
-            <input className="input" placeholder="e.g. Spring Smash Classic" value={name}
-              onChange={(e) => setName(e.target.value)} required autoFocus />
+            <input className="input" placeholder="e.g. Spring Smash Classic"
+              value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
           </div>
           <div>
             <label className="label">Description</label>
-            <textarea className="input resize-none" rows={3} placeholder="Optional details…"
+            <textarea className="input resize-none" rows={2} placeholder="Optional…"
               value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="label">Max Players</label>
               <select className="input" value={maxPlayers} onChange={(e) => setMaxPlayers(Number(e.target.value))}>
-                {[4, 8, 16, 32, 64].map((n) => <option key={n} value={n}>{n} players</option>)}
+                {[4, 8, 16, 32, 64].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
             <div>
               <label className="label">Match Type</label>
               <select className="input" value={matchType} onChange={(e) => setMatchType(e.target.value)}>
-                <option value="S">Singles (S)</option>
-                <option value="D">Doubles (D)</option>
+                <option value="S">Singles</option>
+                <option value="D">Doubles</option>
               </select>
             </div>
-          </div>
-          <div>
-            <label className="label">Score Type (for DUPR)</label>
-            <select className="input" value={scoreType} onChange={(e) => setScoreType(e.target.value)}>
-              <option value="RALLY">Rally Scoring</option>
-              <option value="SIDEOUT">Sideout Scoring</option>
-            </select>
+            <div>
+              <label className="label">Scoring</label>
+              <select className="input" value={scoreType} onChange={(e) => setScoreType(e.target.value)}>
+                <option value="RALLY">Rally</option>
+                <option value="SIDEOUT">Sideout</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div className="card space-y-3">
-          <h2 className="font-semibold text-gray-200">Bracket Format</h2>
-          <div className="space-y-3">
-            {FORMATS.map((f) => (
-              <label key={f.value}
-                className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
-                  format === f.value ? "border-pickle-500 bg-pickle-500/10" : "border-gray-700 hover:border-gray-600"
-                }`}>
-                <input type="radio" name="format" value={f.value} checked={format === f.value}
-                  onChange={() => setFormat(f.value)} className="mt-0.5 accent-pickle-500" />
-                <div>
-                  <div className="font-medium">{f.icon} {f.label}</div>
-                  <div className="text-sm text-gray-400 mt-0.5">{f.desc}</div>
-                </div>
-              </label>
-            ))}
-          </div>
+          <h2 className="text-sm font-semibold text-gg-muted uppercase tracking-widest">Format</h2>
+          {FORMATS.map((f) => (
+            <label key={f.value}
+              className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                format === f.value
+                  ? "border-gg-green bg-gg-green/5"
+                  : "border-gg-border hover:border-gg-border-2"
+              }`}>
+              <input type="radio" name="format" value={f.value} checked={format === f.value}
+                onChange={() => setFormat(f.value)} className="mt-0.5 accent-gg-green" />
+              <div>
+                <div className="text-sm font-medium">{f.icon} {f.label}</div>
+                <div className="text-xs text-gg-muted mt-0.5">{f.desc}</div>
+              </div>
+            </label>
+          ))}
         </div>
 
         <div className="flex gap-3">
-          <button type="submit" className="btn-primary" disabled={loading}>
+          <button type="submit" className="btn-primary flex-1 py-3" disabled={loading}>
             {loading ? "Creating…" : "Create Tournament"}
           </button>
-          <Link href="/tournaments" className="btn-secondary">Cancel</Link>
+          <Link href="/tournaments" className="btn-secondary px-6 py-3">Cancel</Link>
         </div>
       </form>
     </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-interface TournamentCard {
+interface TournamentCardProps {
   id: string;
   name: string;
   description?: string | null;
@@ -17,35 +17,41 @@ const FORMAT_SHORT: Record<string, string> = {
   ROUND_ROBIN: "Round Robin",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  REGISTRATION: "text-pickle-400",
-  IN_PROGRESS: "text-yellow-400",
-  COMPLETED: "text-gray-500",
+const STATUS_DOT: Record<string, string> = {
+  REGISTRATION: "bg-gg-green",
+  IN_PROGRESS:  "bg-gg-yellow",
+  COMPLETED:    "bg-gg-muted",
 };
 
-export default function TournamentCard({ tournament: t }: { tournament: TournamentCard }) {
+const STATUS_LABEL: Record<string, string> = {
+  REGISTRATION: "Open",
+  IN_PROGRESS:  "Live",
+  COMPLETED:    "Done",
+};
+
+export default function TournamentCard({ tournament: t }: { tournament: TournamentCardProps }) {
   return (
     <Link
       href={`/tournaments/${t.id}`}
-      className="card hover:border-gray-600 hover:bg-gray-800/50 transition-all block group"
+      className="card-sm hover:border-gg-border-2 hover:bg-gg-card-2/50 transition-all block group"
     >
-      <div className="flex justify-between items-start mb-2">
-        <span className={`text-xs font-medium ${STATUS_COLORS[t.status]}`}>
-          ● {t.status.replace("_", " ")}
-        </span>
-        <span className="text-xs text-gray-500">{FORMAT_SHORT[t.format]}</span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <span className={`w-2 h-2 rounded-full ${STATUS_DOT[t.status]}`} />
+          <span className="text-xs text-gg-muted">{STATUS_LABEL[t.status]}</span>
+        </div>
+        <span className="text-xs text-gg-muted">{FORMAT_SHORT[t.format]}</span>
       </div>
-      <h3 className="font-semibold text-gray-100 group-hover:text-white mb-1 line-clamp-1">
+
+      <h3 className="font-semibold text-white group-hover:text-gg-green transition-colors mb-1 line-clamp-1">
         {t.name}
       </h3>
       {t.description && (
-        <p className="text-sm text-gray-400 line-clamp-2 mb-3">{t.description}</p>
+        <p className="text-xs text-gg-muted line-clamp-2 mb-3">{t.description}</p>
       )}
-      <div className="flex justify-between items-center text-xs text-gray-500 mt-auto">
-        <span>
-          👥 {t._count.players} / {t.maxPlayers}
-        </span>
-        <span>by {t.createdBy.name}</span>
+      <div className="flex justify-between items-center text-xs text-gg-muted mt-3 pt-3 border-t border-gg-border">
+        <span>{t._count.players} / {t.maxPlayers} players</span>
+        <span>{t.createdBy.name}</span>
       </div>
     </Link>
   );

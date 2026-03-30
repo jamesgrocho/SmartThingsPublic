@@ -13,26 +13,24 @@ export default async function TournamentsPage() {
     },
   });
 
-  const open = tournaments.filter((t) => t.status === "REGISTRATION");
+  const open   = tournaments.filter((t) => t.status === "REGISTRATION");
   const active = tournaments.filter((t) => t.status === "IN_PROGRESS");
-  const done = tournaments.filter((t) => t.status === "COMPLETED");
+  const done   = tournaments.filter((t) => t.status === "COMPLETED");
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Tournaments</h1>
-          <p className="text-gray-400 mt-1">Browse and join pickleball events</p>
+          <h1 className="text-2xl font-bold text-white">Tournaments</h1>
+          <p className="text-gg-muted text-sm mt-1">Browse and join pickleball events</p>
         </div>
-        <Link href="/tournaments/new" className="btn-primary">
-          + New Tournament
-        </Link>
+        <Link href="/tournaments/new" className="btn-primary">+ New</Link>
       </div>
 
       {tournaments.length === 0 && (
-        <div className="text-center py-20 text-gray-500">
+        <div className="text-center py-24 text-gg-muted">
           <div className="text-5xl mb-4">🏓</div>
-          <p className="text-lg">No tournaments yet.</p>
+          <p>No tournaments yet.</p>
           <Link href="/tournaments/new" className="btn-primary mt-4 inline-block">
             Create the first one
           </Link>
@@ -41,38 +39,36 @@ export default async function TournamentsPage() {
 
       {active.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-yellow-400 mb-4 flex items-center gap-2">
-            <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-            In Progress
-          </h2>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-gg-yellow animate-pulse" />
+            <h2 className="text-sm font-semibold text-gg-yellow uppercase tracking-widest">Live</h2>
+          </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {active.map((t) => (
-              <TournamentCard key={t.id} tournament={t as never} />
-            ))}
+            {active.map((t) => <TournamentCard key={t.id} tournament={t as never} />)}
           </div>
         </section>
       )}
 
       {open.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-pickle-400 mb-4">
-            Open Registration
-          </h2>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-gg-green" />
+            <h2 className="text-sm font-semibold text-gg-green uppercase tracking-widest">Open Registration</h2>
+          </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {open.map((t) => (
-              <TournamentCard key={t.id} tournament={t as never} />
-            ))}
+            {open.map((t) => <TournamentCard key={t.id} tournament={t as never} />)}
           </div>
         </section>
       )}
 
       {done.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-gray-500 mb-4">Completed</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-gg-muted" />
+            <h2 className="text-sm font-semibold text-gg-muted uppercase tracking-widest">Completed</h2>
+          </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {done.map((t) => (
-              <TournamentCard key={t.id} tournament={t as never} />
-            ))}
+            {done.map((t) => <TournamentCard key={t.id} tournament={t as never} />)}
           </div>
         </section>
       )}

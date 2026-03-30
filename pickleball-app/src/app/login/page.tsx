@@ -15,13 +15,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
+    const res = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
     if (res?.error) {
       setError("Invalid email or password");
@@ -32,56 +26,40 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-[85vh] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🏓</div>
-          <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="text-gray-400 mt-2">Sign in to manage your tournaments</p>
+          <div className="text-5xl mb-4">🏓</div>
+          <h1 className="text-3xl font-bold text-white">Welcome back</h1>
+          <p className="text-gg-muted mt-2 text-sm">Sign in to manage your tournaments</p>
         </div>
 
-        <div className="card">
+        <div className="bg-gg-card border border-gg-border rounded-2xl p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">
+              <div className="bg-gg-error-dim border border-gg-error/30 rounded-xl px-4 py-3 text-red-400 text-sm">
                 {error}
               </div>
             )}
-
             <div>
               <label className="label">Email</label>
-              <input
-                type="email"
-                className="input"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoFocus
-              />
+              <input type="email" className="input" placeholder="you@example.com"
+                value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
             </div>
-
             <div>
               <label className="label">Password</label>
-              <input
-                type="password"
-                className="input"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <input type="password" className="input" placeholder="••••••••"
+                value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-
-            <button type="submit" className="btn-primary w-full mt-2" disabled={loading}>
+            <button type="submit" className="btn-primary w-full py-3 text-base mt-2" disabled={loading}>
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-gray-400 mt-4 text-sm">
+        <p className="text-center text-gg-muted mt-5 text-sm">
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-pickle-400 hover:text-pickle-300">
+          <Link href="/register" className="text-gg-green hover:text-green-400 font-medium">
             Create one
           </Link>
         </p>

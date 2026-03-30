@@ -9,23 +9,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        pickle: {
-          50:  "#f0fdf4",
-          100: "#dcfce7",
-          200: "#bbf7d0",
-          300: "#86efac",
-          400: "#4ade80",
-          500: "#22c55e",
-          600: "#16a34a",
-          700: "#15803d",
-          800: "#166534",
-          900: "#14532d",
+        gg: {
+          bg:         "#0b0f1a",
+          card:       "#111827",
+          "card-2":   "#1a2235",
+          border:     "#1f2937",
+          "border-2": "#374151",
+          green:      "#22c55e",
+          "green-2":  "#16a34a",
+          "green-dim":"#14532d",
+          muted:      "#6b7280",
+          error:      "#ef4444",
+          "error-dim":"#450a0a",
+          yellow:     "#eab308",
+          orange:     "#f97316",
         },
-        court: {
-          blue:   "#1e40af",
-          yellow: "#eab308",
-          dark:   "#0f172a",
-        },
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+      },
+      borderRadius: {
+        xl: "12px",
+        "2xl": "16px",
+        "3xl": "20px",
       },
     },
   },
