@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -15,11 +15,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = getSessionUser(session as { user?: unknown });
+  if (!user?.isAdmin) {
+    return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }
 
-  const { name, description, format, maxPlayers } = await req.json();
+  const { name, description, format, matchType, scoreType, maxPlayers } = await req.json();
   if (!name || !format) {
     return NextResponse.json({ error: "name and format required" }, { status: 400 });
   }
@@ -29,15 +30,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid format" }, { status: 400 });
   }
 
-  const userId = (session.user as { id: string } & typeof session.user).id;
-
   const tournament = await prisma.tournament.create({
     data: {
       name,
       description: description || null,
       format,
+      matchType: matchType || "S",
+      scoreType: scoreType || "RALLY",
       maxPlayers: Number(maxPlayers) || 16,
-      createdById: userId,
+      createdById: user.id,
     },
     include: {
       createdBy: { select: { id: true, name: true, email: true } },

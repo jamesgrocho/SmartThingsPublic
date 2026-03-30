@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   generateSingleElim,
@@ -12,23 +12,20 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = getSessionUser(session as { user?: unknown });
+  if (!user?.isAdmin) {
+    return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }
 
   const { id } = await params;
-  const userId = (session.user as { id: string } & typeof session.user).id;
 
   const tournament = await prisma.tournament.findUnique({
     where: { id },
-    include: { players: { include: { user: true } } },
+    include: { players: true },
   });
 
   if (!tournament) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  if (tournament.createdById !== userId) {
-    return NextResponse.json({ error: "Only the organizer can start" }, { status: 403 });
   }
   if (tournament.status !== "REGISTRATION") {
     return NextResponse.json({ error: "Tournament already started" }, { status: 400 });
@@ -39,7 +36,7 @@ export async function POST(
 
   // Shuffle players for random seeding
   const playerIds = tournament.players
-    .map((p) => p.userId)
+    .map((p) => p.id)
     .sort(() => Math.random() - 0.5);
 
   let matches;
@@ -58,7 +55,6 @@ export async function POST(
   }
 
   await prisma.$transaction(async (tx) => {
-    // Create all matches
     await tx.match.createMany({ data: matches });
 
     // Advance bye winners for SE/DE

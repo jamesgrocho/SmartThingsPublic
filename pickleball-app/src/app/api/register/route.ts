@@ -20,10 +20,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email already in use" }, { status: 409 });
   }
 
+  const isAdmin = email.toLowerCase() === (process.env.ADMIN_EMAIL ?? "").toLowerCase();
   const hashed = await bcrypt.hash(password, 12);
+
   const user = await prisma.user.create({
-    data: { name, email, password: hashed },
-    select: { id: true, name: true, email: true },
+    data: { name, email, password: hashed, isAdmin },
+    select: { id: true, name: true, email: true, isAdmin: true },
   });
 
   return NextResponse.json(user, { status: 201 });

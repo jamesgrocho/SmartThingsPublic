@@ -12,11 +12,10 @@ model User {
   name      String
   email     String   @unique
   password  String
+  isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  tournamentsCreated Tournament[]       @relation("CreatedBy")
-  tournamentPlayers  TournamentPlayer[]
-  reportedMatches    Match[]            @relation("ReportedBy")
+  tournamentsCreated Tournament[] @relation("CreatedBy")
 }
 
 model Tournament {
@@ -25,26 +24,28 @@ model Tournament {
   description String?
   format      String   // SINGLE_ELIMINATION | DOUBLE_ELIMINATION | ROUND_ROBIN
   status      String   @default("REGISTRATION") // REGISTRATION | IN_PROGRESS | COMPLETED
+  matchType   String   @default("S")    // S = singles, D = doubles (for DUPR export)
+  scoreType   String   @default("RALLY") // RALLY | SIDEOUT (for DUPR export)
   maxPlayers  Int      @default(16)
   createdById String
   createdAt   DateTime @default(now())
 
-  createdBy User               @relation("CreatedBy", fields: [createdById], references: [id])
-  players   TournamentPlayer[]
+  createdBy User     @relation("CreatedBy", fields: [createdById], references: [id])
+  players   Player[]
   matches   Match[]
 }
 
-model TournamentPlayer {
+// Players are created by the admin (not linked to User accounts)
+model Player {
   id           String   @id @default(cuid())
   tournamentId String
-  userId       String
+  firstName    String
+  lastName     String
+  duprId       String?  // DUPR player ID for export
   seed         Int?
-  joinedAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [userId], references: [id])
-
-  @@unique([tournamentId, userId])
 }
 
 model Match {
@@ -53,22 +54,42 @@ model Match {
   round              Int
   position           Int
   bracket            String    @default("WINNERS") // WINNERS | LOSERS | GRAND_FINALS
-  player1Id          String?
-  player2Id          String?
-  player1Score       Int?
-  player2Score       Int?
+  player1Id          String?   // references Player.id
+  player2Id          String?   // references Player.id
+  // Game-by-game scores (up to 5 games for DUPR export)
+  game1P1            Int?
+  game1P2            Int?
+  game2P1            Int?
+  game2P2            Int?
+  game3P1            Int?
+  game3P2            Int?
+  game4P1            Int?
+  game4P2            Int?
+  game5P1            Int?
+  game5P2            Int?
   winnerId           String?
   nextMatchId        String?
   nextMatchSlot      Int?
   loserNextMatchId   String?
   loserNextMatchSlot Int?
   isBye              Boolean   @default(false)
-  reportedById       String?
   completedAt        DateTime?
   createdAt          DateTime  @default(now())
 
-  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  reportedBy User?      @relation("ReportedBy", fields: [reportedById], references: [id])
+  tournament   Tournament     @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  scoreHistory ScoreHistory[]
 
   @@unique([tournamentId, round, position, bracket])
+}
+
+model ScoreHistory {
+  id           String   @id @default(cuid())
+  matchId      String
+  reporterName String
+  reporterType String   // "admin" | "player"
+  action       String   // "submitted" | "edited"
+  scoreData    String   // JSON: [{p1,p2}, ...]
+  createdAt    DateTime @default(now())
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
 }

@@ -1,90 +1,139 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+interface GameScore { p1: number; p2: number }
+
+function computeWinner(
+  games: GameScore[],
+  player1Id: string,
+  player2Id: string
+): string {
+  let p1Wins = 0;
+  let p2Wins = 0;
+  for (const g of games) {
+    if (g.p1 > g.p2) p1Wins++;
+    else p2Wins++;
+  }
+  return p1Wins >= p2Wins ? player1Id : player2Id;
+}
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { id } = await params;
-  const userId = (session.user as { id: string } & typeof session.user).id;
-  const { player1Score, player2Score } = await req.json();
+  const body = await req.json();
 
-  if (typeof player1Score !== "number" || typeof player2Score !== "number") {
-    return NextResponse.json({ error: "Scores must be numbers" }, { status: 400 });
-  }
-  if (player1Score < 0 || player2Score < 0) {
-    return NextResponse.json({ error: "Scores cannot be negative" }, { status: 400 });
-  }
-  if (player1Score === player2Score) {
-    return NextResponse.json({ error: "Pickleball cannot end in a tie" }, { status: 400 });
-  }
+  // games: [{p1: number, p2: number}, ...] — at least 1, up to 5
+  const { games, reporterName } = body as { games: GameScore[]; reporterName?: string };
 
-  const match = await prisma.match.findUnique({ where: { id } });
-  if (!match) return NextResponse.json({ error: "Match not found" }, { status: 404 });
-  if (match.completedAt) {
-    return NextResponse.json({ error: "Match already completed" }, { status: 400 });
+  if (!Array.isArray(games) || games.length === 0 || games.length > 5) {
+    return NextResponse.json({ error: "Provide 1–5 game scores" }, { status: 400 });
   }
-  if (!match.player1Id || !match.player2Id) {
-    return NextResponse.json({ error: "Both players must be set" }, { status: 400 });
+  for (const g of games) {
+    if (typeof g.p1 !== "number" || typeof g.p2 !== "number") {
+      return NextResponse.json({ error: "Each game needs p1 and p2 scores" }, { status: 400 });
+    }
+    if (g.p1 < 0 || g.p2 < 0) {
+      return NextResponse.json({ error: "Scores cannot be negative" }, { status: 400 });
+    }
+    if (g.p1 === g.p2) {
+      return NextResponse.json({ error: "A game cannot end in a tie" }, { status: 400 });
+    }
   }
 
-  // Only a participant or the tournament organizer can report
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: match.tournamentId },
+  const match = await prisma.match.findUnique({
+    where: { id },
+    include: { scoreHistory: true },
   });
-  const isParticipant =
-    match.player1Id === userId || match.player2Id === userId;
-  const isOrganizer = tournament?.createdById === userId;
-  if (!isParticipant && !isOrganizer) {
-    return NextResponse.json({ error: "Only a match participant can report the score" }, { status: 403 });
+  if (!match) return NextResponse.json({ error: "Match not found" }, { status: 404 });
+  if (!match.player1Id || !match.player2Id) {
+    return NextResponse.json({ error: "Both players must be assigned" }, { status: 400 });
   }
 
-  const winnerId =
-    player1Score > player2Score ? match.player1Id : match.player2Id;
-  const loserId =
-    player1Score > player2Score ? match.player2Id : match.player1Id;
+  // Determine reporter
+  const session = await auth();
+  const sessionUser = getSessionUser(session as { user?: unknown });
+
+  let resolvedReporterName: string;
+  let reporterType: string;
+
+  if (sessionUser?.isAdmin) {
+    resolvedReporterName = sessionUser.name ?? "Admin";
+    reporterType = "admin";
+  } else if (reporterName?.trim()) {
+    resolvedReporterName = reporterName.trim();
+    reporterType = "player";
+  } else {
+    return NextResponse.json({ error: "Reporter name required" }, { status: 400 });
+  }
+
+  const isEdit = !!match.completedAt;
+  const action = isEdit ? "edited" : "submitted";
+
+  const winnerId = computeWinner(games, match.player1Id, match.player2Id);
+  const loserNextMatchId = match.loserNextMatchId;
+
+  // Build game score fields
+  const gameData: Record<string, number | null> = {
+    game1P1: games[0]?.p1 ?? null, game1P2: games[0]?.p2 ?? null,
+    game2P1: games[1]?.p1 ?? null, game2P2: games[1]?.p2 ?? null,
+    game3P1: games[2]?.p1 ?? null, game3P2: games[2]?.p2 ?? null,
+    game4P1: games[3]?.p1 ?? null, game4P2: games[3]?.p2 ?? null,
+    game5P1: games[4]?.p1 ?? null, game5P2: games[4]?.p2 ?? null,
+  };
+
+  const prevWinnerId = match.winnerId;
 
   await prisma.$transaction(async (tx) => {
-    // Update this match
+    // Update match
     await tx.match.update({
       where: { id },
       data: {
-        player1Score,
-        player2Score,
+        ...gameData,
         winnerId,
-        reportedById: userId,
         completedAt: new Date(),
       },
     });
 
-    // Advance winner to next match
-    if (match.nextMatchId && match.nextMatchSlot) {
-      const winUpdate =
-        match.nextMatchSlot === 1
-          ? { player1Id: winnerId }
-          : { player2Id: winnerId };
+    // Score history entry
+    await tx.scoreHistory.create({
+      data: {
+        matchId: id,
+        reporterName: resolvedReporterName,
+        reporterType,
+        action,
+        scoreData: JSON.stringify(games),
+      },
+    });
+
+    // Advance winner to next match (only if winner changed or first time)
+    if (match.nextMatchId && match.nextMatchSlot && winnerId !== prevWinnerId) {
+      if (prevWinnerId && match.nextMatchId) {
+        // Clear old winner from next match
+        const clearField = match.nextMatchSlot === 1 ? { player1Id: null } : { player2Id: null };
+        await tx.match.update({ where: { id: match.nextMatchId }, data: clearField });
+      }
+      const winUpdate = match.nextMatchSlot === 1 ? { player1Id: winnerId } : { player2Id: winnerId };
+      await tx.match.update({ where: { id: match.nextMatchId }, data: winUpdate });
+    } else if (match.nextMatchId && match.nextMatchSlot && !prevWinnerId) {
+      // First time — set winner in next match
+      const winUpdate = match.nextMatchSlot === 1 ? { player1Id: winnerId } : { player2Id: winnerId };
       await tx.match.update({ where: { id: match.nextMatchId }, data: winUpdate });
     }
 
-    // For double elim, send loser to losers bracket
-    if (match.loserNextMatchId && match.loserNextMatchSlot) {
+    // Double elim: send loser to losers bracket (only on first completion)
+    const loserId = winnerId === match.player1Id ? match.player2Id : match.player1Id;
+    if (!isEdit && loserNextMatchId && match.loserNextMatchSlot) {
       const loseUpdate =
         match.loserNextMatchSlot === 1
           ? { player1Id: loserId }
           : { player2Id: loserId };
-      await tx.match.update({
-        where: { id: match.loserNextMatchId },
-        data: loseUpdate,
-      });
+      await tx.match.update({ where: { id: loserNextMatchId }, data: loseUpdate });
     }
 
-    // Check if tournament is complete (no remaining incomplete non-bye matches)
+    // Check if tournament is complete
     const remaining = await tx.match.count({
       where: {
         tournamentId: match.tournamentId,
@@ -94,8 +143,6 @@ export async function PATCH(
         player2Id: { not: null },
       },
     });
-
-    // Subtract the current match (just completed)
     if (remaining === 0) {
       await tx.tournament.update({
         where: { id: match.tournamentId },
@@ -104,6 +151,9 @@ export async function PATCH(
     }
   });
 
-  const updated = await prisma.match.findUnique({ where: { id } });
+  const updated = await prisma.match.findUnique({
+    where: { id },
+    include: { scoreHistory: { orderBy: { createdAt: "desc" } } },
+  });
   return NextResponse.json(updated);
 }

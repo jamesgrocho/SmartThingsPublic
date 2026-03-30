@@ -11,11 +11,11 @@ export async function GET(
     where: { id },
     include: {
       createdBy: { select: { id: true, name: true, email: true } },
-      players: {
-        include: { user: { select: { id: true, name: true, email: true } } },
-        orderBy: { joinedAt: "asc" },
+      players: { orderBy: { createdAt: "asc" } },
+      matches: {
+        orderBy: [{ bracket: "asc" }, { round: "asc" }, { position: "asc" }],
+        include: { scoreHistory: { orderBy: { createdAt: "desc" } } },
       },
-      matches: { orderBy: [{ bracket: "asc" }, { round: "asc" }, { position: "asc" }] },
     },
   });
 

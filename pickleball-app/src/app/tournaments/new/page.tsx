@@ -28,18 +28,22 @@ const FORMATS = [
 export default function NewTournamentPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [format, setFormat] = useState("SINGLE_ELIMINATION");
+  const [matchType, setMatchType] = useState("S");
+  const [scoreType, setScoreType] = useState("RALLY");
   const [maxPlayers, setMaxPlayers] = useState(16);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (status === "loading") return null;
-  if (!session) {
+  if (!session || !isAdmin) {
     return (
       <div className="max-w-md mx-auto px-6 py-20 text-center">
-        <p className="text-gray-400 mb-4">You must be logged in to create a tournament.</p>
+        <p className="text-gray-400 mb-4">Admin access required to create tournaments.</p>
         <Link href="/login" className="btn-primary">Sign in</Link>
       </div>
     );
@@ -49,22 +53,15 @@ export default function NewTournamentPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     const res = await fetch("/api/tournaments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, format, maxPlayers }),
+      body: JSON.stringify({ name, description, format, matchType, scoreType, maxPlayers }),
     });
-
     setLoading(false);
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || "Failed to create tournament");
-      return;
-    }
-
-    const tournament = await res.json();
-    router.push(`/tournaments/${tournament.id}`);
+    if (!res.ok) { const d = await res.json(); setError(d.error || "Failed"); return; }
+    const t = await res.json();
+    router.push(`/tournaments/${t.id}`);
   }
 
   return (
@@ -76,75 +73,57 @@ export default function NewTournamentPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">
-            {error}
-          </div>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">{error}</div>
         )}
 
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-200">Basic Info</h2>
-
           <div>
             <label className="label">Tournament Name *</label>
-            <input
-              className="input"
-              placeholder="e.g. Spring Smash Classic"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              autoFocus
-            />
+            <input className="input" placeholder="e.g. Spring Smash Classic" value={name}
+              onChange={(e) => setName(e.target.value)} required autoFocus />
           </div>
-
           <div>
             <label className="label">Description</label>
-            <textarea
-              className="input resize-none"
-              rows={3}
-              placeholder="Optional details about the event…"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <textarea className="input resize-none" rows={3} placeholder="Optional details…"
+              value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
-
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Max Players</label>
+              <select className="input" value={maxPlayers} onChange={(e) => setMaxPlayers(Number(e.target.value))}>
+                {[4, 8, 16, 32, 64].map((n) => <option key={n} value={n}>{n} players</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Match Type</label>
+              <select className="input" value={matchType} onChange={(e) => setMatchType(e.target.value)}>
+                <option value="S">Singles (S)</option>
+                <option value="D">Doubles (D)</option>
+              </select>
+            </div>
+          </div>
           <div>
-            <label className="label">Max Players</label>
-            <select
-              className="input"
-              value={maxPlayers}
-              onChange={(e) => setMaxPlayers(Number(e.target.value))}
-            >
-              {[4, 8, 16, 32, 64].map((n) => (
-                <option key={n} value={n}>{n} players</option>
-              ))}
+            <label className="label">Score Type (for DUPR)</label>
+            <select className="input" value={scoreType} onChange={(e) => setScoreType(e.target.value)}>
+              <option value="RALLY">Rally Scoring</option>
+              <option value="SIDEOUT">Sideout Scoring</option>
             </select>
           </div>
         </div>
 
         <div className="card space-y-3">
-          <h2 className="font-semibold text-gray-200">Format</h2>
+          <h2 className="font-semibold text-gray-200">Bracket Format</h2>
           <div className="space-y-3">
             {FORMATS.map((f) => (
-              <label
-                key={f.value}
+              <label key={f.value}
                 className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors ${
-                  format === f.value
-                    ? "border-pickle-500 bg-pickle-500/10"
-                    : "border-gray-700 hover:border-gray-600"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="format"
-                  value={f.value}
-                  checked={format === f.value}
-                  onChange={() => setFormat(f.value)}
-                  className="mt-0.5 accent-pickle-500"
-                />
+                  format === f.value ? "border-pickle-500 bg-pickle-500/10" : "border-gray-700 hover:border-gray-600"
+                }`}>
+                <input type="radio" name="format" value={f.value} checked={format === f.value}
+                  onChange={() => setFormat(f.value)} className="mt-0.5 accent-pickle-500" />
                 <div>
-                  <div className="font-medium">
-                    {f.icon} {f.label}
-                  </div>
+                  <div className="font-medium">{f.icon} {f.label}</div>
                   <div className="text-sm text-gray-400 mt-0.5">{f.desc}</div>
                 </div>
               </label>
@@ -156,9 +135,7 @@ export default function NewTournamentPage() {
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? "Creating…" : "Create Tournament"}
           </button>
-          <Link href="/tournaments" className="btn-secondary">
-            Cancel
-          </Link>
+          <Link href="/tournaments" className="btn-secondary">Cancel</Link>
         </div>
       </form>
     </div>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, getSessionUser } from "@/lib/auth";
 import SingleElimination from "@/components/brackets/SingleElimination";
 import DoubleElimination from "@/components/brackets/DoubleElimination";
 import RoundRobin from "@/components/brackets/RoundRobin";
@@ -21,18 +21,16 @@ export default async function BracketPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  const userId = session?.user
-    ? (session.user as { id: string } & typeof session.user).id
-    : null;
+  const sessionUser = getSessionUser(session as { user?: unknown });
+  const isAdmin = sessionUser?.isAdmin ?? false;
 
   const tournament = await prisma.tournament.findUnique({
     where: { id },
     include: {
-      players: {
-        include: { user: { select: { id: true, name: true, email: true } } },
-      },
+      players: true,
       matches: {
         orderBy: [{ bracket: "asc" }, { round: "asc" }, { position: "asc" }],
+        include: { scoreHistory: { orderBy: { createdAt: "desc" } } },
       },
     },
   });
@@ -42,16 +40,19 @@ export default async function BracketPage({
     return (
       <div className="max-w-xl mx-auto px-6 py-20 text-center">
         <p className="text-gray-400 mb-4">Tournament hasn&apos;t started yet.</p>
-        <Link href={`/tournaments/${id}`} className="btn-secondary">
-          ← Back
-        </Link>
+        <Link href={`/tournaments/${id}`} className="btn-secondary">← Back</Link>
       </div>
     );
   }
 
-  const playerMap = Object.fromEntries(
-    tournament.players.map((p) => [p.userId, p.user.name])
-  );
+  // Build player map: id → { name, duprId }
+  const playerMap: Record<string, { name: string; duprId: string | null }> =
+    Object.fromEntries(
+      tournament.players.map((p) => [
+        p.id,
+        { name: `${p.firstName} ${p.lastName}`, duprId: p.duprId },
+      ])
+    );
 
   return (
     <div className="px-4 py-8">
@@ -59,37 +60,38 @@ export default async function BracketPage({
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <Link
-              href={`/tournaments/${id}`}
-              className="text-sm text-gray-500 hover:text-gray-300 mb-1 block"
-            >
+            <Link href={`/tournaments/${id}`} className="text-sm text-gray-500 hover:text-gray-300 mb-1 block">
               ← {tournament.name}
             </Link>
-            <h1 className="text-2xl font-bold">
-              {FORMAT_LABELS[tournament.format]} Bracket
-            </h1>
+            <h1 className="text-2xl font-bold">{FORMAT_LABELS[tournament.format]} Bracket</h1>
             <p className="text-sm text-gray-400 mt-0.5">
               {tournament.status === "COMPLETED"
-                ? "Tournament completed"
-                : "Live — click any match to report scores"}
+                ? "Tournament completed 🏆"
+                : "Tap a match to report scores"}
             </p>
           </div>
-          <div className="flex gap-2 text-sm">
-            <span className="flex items-center gap-1 text-gray-400">
-              <span className="w-3 h-3 rounded-sm bg-pickle-500 inline-block" /> Winner
-            </span>
-            <span className="flex items-center gap-1 text-gray-400">
-              <span className="w-3 h-3 rounded-sm bg-gray-700 inline-block" /> TBD
-            </span>
+          <div className="flex items-center gap-3">
+            {isAdmin && (
+              <a href={`/api/tournaments/${id}/export`} download className="btn-secondary text-sm">
+                Export DUPR CSV
+              </a>
+            )}
+            <div className="flex gap-2 text-xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded-sm bg-pickle-500 inline-block" /> Winner
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded-sm bg-gray-700 inline-block" /> TBD
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Bracket */}
         {tournament.format === "SINGLE_ELIMINATION" && (
           <SingleElimination
             matches={tournament.matches as never}
             playerMap={playerMap}
-            userId={userId}
+            isAdmin={isAdmin}
             tournamentId={id}
           />
         )}
@@ -97,7 +99,7 @@ export default async function BracketPage({
           <DoubleElimination
             matches={tournament.matches as never}
             playerMap={playerMap}
-            userId={userId}
+            isAdmin={isAdmin}
             tournamentId={id}
           />
         )}
@@ -105,7 +107,7 @@ export default async function BracketPage({
           <RoundRobin
             matches={tournament.matches as never}
             playerMap={playerMap}
-            userId={userId}
+            isAdmin={isAdmin}
             tournamentId={id}
           />
         )}
