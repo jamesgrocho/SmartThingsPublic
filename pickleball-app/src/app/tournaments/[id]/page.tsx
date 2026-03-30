@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { auth, getSessionUser } from "@/lib/auth";
 import TournamentActions from "./TournamentActions";
 import PlayerManager from "./PlayerManager";
+import CopyButton from "./CopyButton";
 
 export const dynamic = "force-dynamic";
 
@@ -134,18 +135,10 @@ export default async function TournamentOverviewPage({
             </a>
           )}
           <CopyButton text={bracketUrl} />
+
         </div>
       </div>
     </div>
   );
 }
 
-function CopyButton({ text }: { text: string }) {
-  return (
-    <button className="btn-secondary text-xs py-1.5"
-      onClick={() => navigator.clipboard.writeText(text)}
-      suppressHydrationWarning>
-      Copy Link
-    </button>
-  );
-}
