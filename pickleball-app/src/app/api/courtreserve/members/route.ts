@@ -45,8 +45,13 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
+    // Log the raw shape so we can see what CourtReserve returns
+    console.log("CourtReserve raw response keys:", Object.keys(data ?? {}));
+    console.log("CourtReserve Data sample:", JSON.stringify(data).slice(0, 500));
+
     // CourtReserve wraps results in a Data array
-    const members: Record<string, unknown>[] = data?.Data ?? data ?? [];
+    const raw = data?.Data ?? data?.data ?? data?.Members ?? data?.members ?? data;
+    const members: Record<string, unknown>[] = Array.isArray(raw) ? raw : [];
 
     // Filter by the search query against first/last name
     const filtered = members
