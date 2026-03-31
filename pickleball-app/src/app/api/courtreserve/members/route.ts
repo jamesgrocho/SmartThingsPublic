@@ -47,6 +47,8 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     // Response shape: { Data: { TotalPages, PageSize, Members: [...] } }
     const members: Record<string, unknown>[] = data?.Data?.Members ?? [];
+    // Log first member to find DUPR field name
+    if (members.length > 0) console.log("First member full object:", JSON.stringify(members[0]));
 
     // Filter by the search query against first/last name
     const filtered = members
