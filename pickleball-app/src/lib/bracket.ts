@@ -6,8 +6,6 @@ export interface MatchInput {
   bracket: string;
   player1Id: string | null;
   player2Id: string | null;
-  player1Score: number | null;
-  player2Score: number | null;
   winnerId: string | null;
   nextMatchId: string | null;
   nextMatchSlot: number | null;
@@ -74,8 +72,6 @@ export function generateSingleElim(
       bracket: "WINNERS",
       player1Id: p1,
       player2Id: p2,
-      player1Score: null,
-      player2Score: null,
       winnerId,
       nextMatchId:
         nextRound && nextPos ? wbId(tournamentId, nextRound, nextPos) : null,
@@ -102,8 +98,6 @@ export function generateSingleElim(
         bracket: "WINNERS",
         player1Id: null,
         player2Id: null,
-        player1Score: null,
-        player2Score: null,
         winnerId: null,
         nextMatchId:
           nextRound && nextPos ? wbId(tournamentId, nextRound, nextPos) : null,
@@ -169,8 +163,6 @@ export function generateDoubleElim(
       bracket: "WINNERS",
       player1Id: p1,
       player2Id: p2,
-      player1Score: null,
-      player2Score: null,
       winnerId,
       nextMatchId: k > 1 ? wbId(tournamentId, 2, Math.ceil(p / 2)) : gfId(tournamentId),
       nextMatchSlot: p % 2 === 1 ? 1 : 2,
@@ -202,8 +194,6 @@ export function generateDoubleElim(
         bracket: "WINNERS",
         player1Id: null,
         player2Id: null,
-        player1Score: null,
-        player2Score: null,
         winnerId: null,
         nextMatchId: nextMId,
         nextMatchSlot: nextSlot,
@@ -251,8 +241,6 @@ export function generateDoubleElim(
         bracket: "LOSERS",
         player1Id: null,
         player2Id: null,
-        player1Score: null,
-        player2Score: null,
         winnerId: null,
         nextMatchId: nextMId,
         nextMatchSlot: nextSlot,
@@ -272,8 +260,6 @@ export function generateDoubleElim(
     bracket: "GRAND_FINALS",
     player1Id: null,
     player2Id: null,
-    player1Score: null,
-    player2Score: null,
     winnerId: null,
     nextMatchId: null,
     nextMatchSlot: null,
@@ -317,8 +303,6 @@ export function generateRoundRobin(
         bracket: "WINNERS",
         player1Id: isBye ? null : p1 === "BYE" ? null : p1,
         player2Id: isBye ? null : p2 === "BYE" ? null : p2,
-        player1Score: null,
-        player2Score: null,
         winnerId: null,
         nextMatchId: null,
         nextMatchSlot: null,
