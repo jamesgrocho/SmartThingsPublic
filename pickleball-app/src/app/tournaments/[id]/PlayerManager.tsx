@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import ImportFromEventModal from "./ImportFromEventModal";
 
 interface Player {
   id: string;
@@ -101,6 +102,7 @@ export default function PlayerManager({ tournamentId, players: initial, maxPlaye
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [showEventModal, setShowEventModal] = useState(false);
 
   // Autocomplete state
   const [suggestions, setSuggestions] = useState<CRSuggestion[]>([]);
@@ -234,6 +236,13 @@ export default function PlayerManager({ tournamentId, players: initial, maxPlaye
         {!isFull && (
           <div className="flex items-center gap-2">
             <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleCSV} />
+            <button
+              onClick={() => setShowEventModal(true)}
+              className="btn-ghost text-xs py-1"
+              title="Import players from a CourtReserve event"
+            >
+              From Event
+            </button>
             <button
               onClick={() => fileRef.current?.click()}
               className="btn-ghost text-xs py-1"
@@ -385,6 +394,25 @@ export default function PlayerManager({ tournamentId, players: initial, maxPlaye
         Accepts CourtReserve event export CSV, or simple format:{" "}
         <span className="font-mono">FirstName, LastName, DuprId</span>
       </p>
+
+      {showEventModal && (
+        <ImportFromEventModal
+          onClose={() => setShowEventModal(false)}
+          onImport={async (rows) => {
+            setImporting(true);
+            setError("");
+            let added = 0;
+            for (const row of rows) {
+              if (players.length + added >= maxPlayers) break;
+              const player = await addOne(row.firstName, row.lastName, row.duprId);
+              if (player) { setPlayers((prev) => [...prev, player]); added++; }
+            }
+            setImporting(false);
+            if (added === 0) setError("No players were added (tournament may be full)");
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
