@@ -47,6 +47,8 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     const raw: Record<string, unknown>[] = Array.isArray(data?.Data) ? data.Data : [];
 
+    console.log(`CourtReserve events: ${raw.length} total, searching "${q}"`);
+
     const events: CREvent[] = raw
       .filter((e) => String(e.EventName ?? "").toLowerCase().includes(q))
       .slice(0, 20)
@@ -57,6 +59,12 @@ export async function GET(req: NextRequest) {
         endDate: String(e.EndDateTime ?? e.StartDateTime ?? ""),
       }))
       .filter((e) => e.id && e.name);
+
+    console.log(`CourtReserve events: ${events.length} matched`);
+    if (raw.length > 0 && events.length === 0) {
+      // Log first few event names to help debug why nothing matched
+      console.log("Sample event names:", raw.slice(0, 5).map((e) => e.EventName));
+    }
 
     return NextResponse.json(events);
   } catch (err) {
