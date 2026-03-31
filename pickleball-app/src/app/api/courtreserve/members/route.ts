@@ -45,13 +45,8 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
-    // Log the raw shape so we can see what CourtReserve returns
-    console.log("CourtReserve raw response keys:", Object.keys(data ?? {}));
-    console.log("CourtReserve Data sample:", JSON.stringify(data).slice(0, 500));
-
-    // CourtReserve wraps results in a Data array
-    const raw = data?.Data ?? data?.data ?? data?.Members ?? data?.members ?? data;
-    const members: Record<string, unknown>[] = Array.isArray(raw) ? raw : [];
+    // Response shape: { Data: { TotalPages, PageSize, Members: [...] } }
+    const members: Record<string, unknown>[] = data?.Data?.Members ?? [];
 
     // Filter by the search query against first/last name
     const filtered = members
@@ -63,10 +58,10 @@ export async function GET(req: NextRequest) {
       })
       .slice(0, 10) // max 10 suggestions
       .map((m) => ({
-        id: String(m.Id ?? m.id ?? ""),
-        firstName: String(m.FirstName ?? m.firstName ?? ""),
-        lastName: String(m.LastName ?? m.lastName ?? ""),
-        email: String(m.Email ?? m.email ?? ""),
+        id: String(m.OrganizationMemberId ?? m.Id ?? ""),
+        firstName: String(m.FirstName ?? ""),
+        lastName: String(m.LastName ?? ""),
+        email: String(m.Email ?? ""),
       }));
 
     return NextResponse.json(filtered);
