@@ -23,16 +23,70 @@ interface Props {
   maxPlayers: number;
 }
 
+function parseCSVLine(line: string): string[] {
+  // Handle quoted fields that may contain commas
+  const cols: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === "," && !inQuotes) { cols.push(current.trim()); current = ""; }
+    else { current += ch; }
+  }
+  cols.push(current.trim());
+  return cols;
+}
+
 function parseCSV(text: string): { firstName: string; lastName: string; duprId: string }[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length === 0) return [];
+
   const results: { firstName: string; lastName: string; duprId: string }[] = [];
-  for (const line of lines) {
-    const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
-    if (cols.length >= 2 && cols[0] && cols[1]) {
-      results.push({ firstName: cols[0], lastName: cols[1], duprId: cols[2] ?? "" });
+  const headers = parseCSVLine(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  // Detect CourtReserve event report format by looking for known header names
+  const firstIdx  = headers.findIndex((h) => h === "memberfirstname" || h === "firstname");
+  const lastIdx   = headers.findIndex((h) => h === "memberlastname"  || h === "lastname");
+  const duprIdx   = headers.findIndex((h) => h.includes("duprid") || h.includes("dupr"));
+  const statusIdx = headers.findIndex((h) => h === "registrationstatus");
+
+  if (firstIdx !== -1 && lastIdx !== -1) {
+    // Header row detected — CourtReserve export or similar
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      const firstName = cols[firstIdx]?.trim();
+      const lastName  = cols[lastIdx]?.trim();
+      if (!firstName || !lastName) continue;
+      // Skip cancelled registrations if status column exists
+      if (statusIdx !== -1) {
+        const status = cols[statusIdx]?.trim().toLowerCase();
+        if (status && status !== "registered" && status !== "active") continue;
+      }
+      results.push({
+        firstName,
+        lastName,
+        duprId: duprIdx !== -1 ? (cols[duprIdx]?.trim() ?? "") : "",
+      });
+    }
+  } else {
+    // Simple format: FirstName, LastName[, DuprId]
+    for (const line of lines) {
+      const cols = parseCSVLine(line);
+      if (cols.length >= 2 && cols[0] && cols[1]) {
+        results.push({ firstName: cols[0], lastName: cols[1], duprId: cols[2] ?? "" });
+      }
     }
   }
-  return results;
+
+  // Deduplicate by full name
+  const seen = new Set<string>();
+  return results.filter((p) => {
+    const key = `${p.firstName.toLowerCase()} ${p.lastName.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export default function PlayerManager({ tournamentId, players: initial, maxPlayers }: Props) {
@@ -328,7 +382,8 @@ export default function PlayerManager({ tournamentId, players: initial, maxPlaye
       )}
 
       <p className="text-xs text-gg-muted mt-4 border-t border-gg-border pt-3">
-        CSV format: <span className="font-mono">FirstName, LastName, DuprId</span>
+        Accepts CourtReserve event export CSV, or simple format:{" "}
+        <span className="font-mono">FirstName, LastName, DuprId</span>
       </p>
     </div>
   );
