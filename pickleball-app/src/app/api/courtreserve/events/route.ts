@@ -32,19 +32,20 @@ export async function GET(req: NextRequest) {
   const fmt = (d: Date) => d.toISOString().split("T")[0];
 
   try {
-    const res = await fetch(
-      `https://api.courtreserve.com/api/v1/eventcalendar/eventlist?orgId=${ORG_ID}&startDate=${fmt(from)}&endDate=${fmt(to)}`,
-      {
-        headers: { Authorization: `Basic ${credentials}`, Accept: "application/json" },
-        next: { revalidate: 300 },
-      }
-    );
+    const fetchUrl = `https://api.courtreserve.com/api/v1/eventcalendar/eventlist?orgId=${ORG_ID}&startDate=${fmt(from)}&endDate=${fmt(to)}`;
+    console.log("Fetching events URL:", fetchUrl);
+    const res = await fetch(fetchUrl, {
+      headers: { Authorization: `Basic ${credentials}`, Accept: "application/json" },
+      cache: "no-store",
+    });
 
     if (!res.ok) {
       return NextResponse.json({ error: "CourtReserve API error" }, { status: 502 });
     }
 
     const data = await res.json();
+    console.log("Events response keys:", Object.keys(data ?? {}));
+    console.log("data.Data type:", typeof data?.Data, "isArray:", Array.isArray(data?.Data), "length:", Array.isArray(data?.Data) ? data.Data.length : "n/a");
     const raw: Record<string, unknown>[] = Array.isArray(data?.Data) ? data.Data : [];
 
     console.log(`CourtReserve events: ${raw.length} total, searching "${q}"`);
