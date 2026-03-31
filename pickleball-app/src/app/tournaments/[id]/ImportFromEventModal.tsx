@@ -72,7 +72,7 @@ export default function ImportFromEventModal({ onClose, onImport }: Props) {
 
     try {
       const res = await fetch(
-        `/api/courtreserve/events/registrations?eventDateFrom=${from}&eventDateTo=${to}`
+        `/api/courtreserve/events/registrations?eventDateFrom=${from}&eventDateTo=${to}&eventId=${encodeURIComponent(ev.id)}&eventName=${encodeURIComponent(ev.name)}`
       );
       const data = await res.json();
       if (Array.isArray(data)) setRegistrants(data);

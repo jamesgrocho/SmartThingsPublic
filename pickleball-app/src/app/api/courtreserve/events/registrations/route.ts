@@ -21,6 +21,8 @@ export async function GET(req: NextRequest) {
 
   const eventDateFrom = req.nextUrl.searchParams.get("eventDateFrom");
   const eventDateTo   = req.nextUrl.searchParams.get("eventDateTo");
+  const eventId       = req.nextUrl.searchParams.get("eventId") ?? "";
+  const eventName     = req.nextUrl.searchParams.get("eventName") ?? "";
 
   if (!eventDateFrom || !eventDateTo) {
     return NextResponse.json({ error: "eventDateFrom and eventDateTo are required" }, { status: 400 });
@@ -46,10 +48,21 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
-    console.log("Registrations response keys:", Object.keys(data ?? {}));
-    if (data?.Data?.length > 0) console.log("First registrant:", JSON.stringify(data.Data[0]).slice(0, 500));
+    const allRecords: Record<string, unknown>[] = data?.Data ?? data?.data ?? (Array.isArray(data) ? data : []);
 
-    const raw: Record<string, unknown>[] = data?.Data ?? data?.data ?? (Array.isArray(data) ? data : []);
+    if (allRecords.length > 0) {
+      console.log("First registration record:", JSON.stringify(allRecords[0]).slice(0, 500));
+    }
+
+    // Filter to only the selected event by ID or name
+    const raw = allRecords.filter((r) => {
+      if (eventId && (String(r.EventId ?? r.ReservationId ?? "") === eventId)) return true;
+      if (eventName && String(r.EventName ?? "").toLowerCase() === eventName.toLowerCase()) return true;
+      // If no match possible, include all (fallback)
+      return !eventId && !eventName;
+    });
+
+    console.log(`Registrations: ${allRecords.length} total on that date, ${raw.length} for this event`);
 
     // Deduplicate by full name
     const seen = new Set<string>();
