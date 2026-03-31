@@ -21,3 +21,8 @@
 
 # Build files
 /build
+pickleball-app/.env
+pickleball-app/node_modules/
+pickleball-app/.next/
+pickleball-app/prisma/dev.db
+pickleball-app/prisma/dev.db-journal

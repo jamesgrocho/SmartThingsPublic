@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply bg-gg-bg text-white antialiased; }
+  * { box-sizing: border-box; }
+}
+
+@layer components {
+
+  /* ── Buttons ─────────────────────────────── */
+  .btn-primary {
+    @apply bg-gg-green hover:bg-gg-green-2 active:scale-95
+           text-white font-semibold px-4 py-2.5 rounded-xl
+           transition-all duration-150 disabled:opacity-40
+           disabled:cursor-not-allowed disabled:active:scale-100
+           text-sm;
+  }
+  .btn-secondary {
+    @apply bg-gg-card-2 hover:bg-gg-border-2 active:scale-95
+           text-white font-semibold px-4 py-2.5 rounded-xl
+           transition-all duration-150 disabled:opacity-40
+           disabled:cursor-not-allowed text-sm border border-gg-border;
+  }
+  .btn-ghost {
+    @apply text-gg-muted hover:text-white px-3 py-2 rounded-lg
+           transition-colors text-sm;
+  }
+  .btn-danger {
+    @apply bg-gg-error hover:bg-red-700 active:scale-95
+           text-white font-semibold px-4 py-2.5 rounded-xl
+           transition-all duration-150 text-sm;
+  }
+
+  /* ── Cards ───────────────────────────────── */
+  .card {
+    @apply bg-gg-card border border-gg-border rounded-2xl p-5;
+  }
+  .card-sm {
+    @apply bg-gg-card border border-gg-border rounded-xl p-4;
+  }
+
+  /* ── Form inputs ─────────────────────────── */
+  .input {
+    @apply bg-gg-bg border border-gg-border-2 rounded-xl px-4 py-3
+           text-white placeholder-gg-muted w-full text-sm
+           focus:outline-none focus:ring-2 focus:ring-gg-green
+           focus:border-gg-green transition-colors;
+  }
+  .input-error {
+    @apply border-gg-error focus:ring-gg-error focus:border-gg-error;
+  }
+  .label {
+    @apply block text-sm font-medium text-gray-300 mb-1.5;
+  }
+
+  /* ── Badges ──────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full
+           text-xs font-semibold;
+  }
+  .badge-green  { @apply badge bg-gg-green-dim text-gg-green border border-gg-green/20; }
+  .badge-yellow { @apply badge bg-yellow-950 text-yellow-400 border border-yellow-500/20; }
+  .badge-gray   { @apply badge bg-gg-card-2 text-gg-muted border border-gg-border; }
+  .badge-red    { @apply badge bg-gg-error-dim text-red-400 border border-red-500/20; }
+  .badge-blue   { @apply badge bg-blue-950 text-blue-400 border border-blue-500/20; }
+
+  /* ── Tabs ────────────────────────────────── */
+  .tab-bar {
+    @apply flex gap-1 border-b border-gg-border;
+  }
+  .tab {
+    @apply px-4 py-3 text-sm font-medium text-gg-muted hover:text-white
+           border-b-2 border-transparent -mb-px transition-colors;
+  }
+  .tab-active {
+    @apply text-white border-gg-green;
+  }
+
+  /* ── Match card ──────────────────────────── */
+  .match-card {
+    @apply bg-gg-card border border-gg-border rounded-2xl
+           hover:border-gg-border-2 transition-all duration-150;
+  }
+  .match-card-clickable {
+    @apply match-card cursor-pointer hover:border-gg-green/50;
+  }
+}
