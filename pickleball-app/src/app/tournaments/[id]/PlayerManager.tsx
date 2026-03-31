@@ -14,6 +14,7 @@ interface CRSuggestion {
   firstName: string;
   lastName: string;
   email: string;
+  duprId: string;
 }
 
 interface Props {
@@ -99,6 +100,7 @@ export default function PlayerManager({ tournamentId, players: initial, maxPlaye
   function selectSuggestion(s: CRSuggestion) {
     setFirstName(s.firstName);
     setLastName(s.lastName);
+    if (s.duprId) setDuprId(s.duprId);
     setShowDropdown(false);
     setSuggestions([]);
     setActiveField(null);
@@ -255,8 +257,13 @@ export default function PlayerManager({ tournamentId, players: initial, maxPlaye
                           {s.firstName[0]}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-white">
+                          <div className="text-sm font-medium text-white flex items-center gap-2">
                             {s.firstName} {s.lastName}
+                            {s.duprId && (
+                              <span className="text-xs font-mono bg-gg-green/10 text-gg-green border border-gg-green/20 rounded px-1.5 py-0.5">
+                                DUPR {s.duprId}
+                              </span>
+                            )}
                           </div>
                           {s.email && (
                             <div className="text-xs text-gg-muted truncate">{s.email}</div>
