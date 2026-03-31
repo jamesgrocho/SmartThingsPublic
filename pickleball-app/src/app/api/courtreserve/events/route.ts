@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth, getSessionUser } from "@/lib/auth";
 
 const ORG_ID = process.env.COURTRESERVE_ORG_ID!;
@@ -12,21 +12,23 @@ export interface CREvent {
   endDate: string;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   const user = getSessionUser(session as { user?: unknown });
   if (!user?.isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const q = req.nextUrl.searchParams.get("q")?.toLowerCase().trim() ?? "";
+  if (!q || q.length < 2) return NextResponse.json([]);
+
   const credentials = Buffer.from(`${CR_USER}:${CR_PASS}`).toString("base64");
 
-  // Fetch events from 60 days ago to 60 days ahead
+  // Fetch events from 90 days ago to 90 days ahead
   const from = new Date();
-  from.setDate(from.getDate() - 60);
+  from.setDate(from.getDate() - 90);
   const to = new Date();
-  to.setDate(to.getDate() + 60);
-
+  to.setDate(to.getDate() + 90);
   const fmt = (d: Date) => d.toISOString().split("T")[0];
 
   try {
@@ -39,23 +41,22 @@ export async function GET() {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      console.error("CourtReserve events error:", res.status, text);
       return NextResponse.json({ error: "CourtReserve API error" }, { status: 502 });
     }
 
     const data = await res.json();
-    console.log("Events response keys:", Object.keys(data ?? {}));
-    console.log("Events sample:", JSON.stringify(data).slice(0, 600));
+    const raw: Record<string, unknown>[] = Array.isArray(data?.Data) ? data.Data : [];
 
-    const raw: Record<string, unknown>[] = data?.Data ?? data?.Events ?? data?.data ?? (Array.isArray(data) ? data : []);
-
-    const events: CREvent[] = raw.map((e) => ({
-      id: String(e.Id ?? e.EventId ?? e.id ?? ""),
-      name: String(e.Name ?? e.EventName ?? e.Title ?? ""),
-      startDate: String(e.StartDate ?? e.EventDate ?? e.Start ?? ""),
-      endDate: String(e.EndDate ?? e.End ?? e.StartDate ?? ""),
-    })).filter((e) => e.id && e.name);
+    const events: CREvent[] = raw
+      .filter((e) => String(e.EventName ?? "").toLowerCase().includes(q))
+      .slice(0, 20)
+      .map((e) => ({
+        id: String(e.EventId ?? ""),
+        name: String(e.EventName ?? ""),
+        startDate: String(e.StartDateTime ?? ""),
+        endDate: String(e.EndDateTime ?? e.StartDateTime ?? ""),
+      }))
+      .filter((e) => e.id && e.name);
 
     return NextResponse.json(events);
   } catch (err) {

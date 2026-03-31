@@ -28,7 +28,7 @@ function fmtDate(iso: string) {
 
 export default function ImportFromEventModal({ onClose, onImport }: Props) {
   const [events, setEvents] = useState<CREvent[]>([]);
-  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingEvents, setLoadingEvents] = useState(false);
   const [eventsError, setEventsError] = useState("");
   const [search, setSearch] = useState("");
 
@@ -38,18 +38,27 @@ export default function ImportFromEventModal({ onClose, onImport }: Props) {
   const [regError, setRegError] = useState("");
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    searchRef.current?.focus();
-    fetch("/api/courtreserve/events")
-      .then((r) => r.json())
-      .then((d) => {
-        if (Array.isArray(d)) setEvents(d);
-        else setEventsError(d.error ?? "Failed to load events");
-      })
-      .catch(() => setEventsError("Failed to load events"))
-      .finally(() => setLoadingEvents(false));
-  }, []);
+  useEffect(() => { searchRef.current?.focus(); }, []);
+
+  function handleSearchChange(val: string) {
+    setSearch(val);
+    setEventsError("");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!val || val.length < 2) { setEvents([]); setLoadingEvents(false); return; }
+    setLoadingEvents(true);
+    debounceRef.current = setTimeout(() => {
+      fetch(`/api/courtreserve/events?q=${encodeURIComponent(val)}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (Array.isArray(d)) setEvents(d);
+          else setEventsError(d.error ?? "Failed to load events");
+        })
+        .catch(() => setEventsError("Failed to load events"))
+        .finally(() => setLoadingEvents(false));
+    }, 350);
+  }
 
   async function selectEvent(ev: CREvent) {
     setSelectedEvent(ev);
@@ -75,10 +84,6 @@ export default function ImportFromEventModal({ onClose, onImport }: Props) {
     }
   }
 
-  const filtered = events.filter((e) =>
-    e.name.toLowerCase().includes(search.toLowerCase())
-  );
-
   function handleImport() {
     onImport(registrants.map((r) => ({ firstName: r.firstName, lastName: r.lastName, duprId: "" })));
     onClose();
@@ -102,9 +107,9 @@ export default function ImportFromEventModal({ onClose, onImport }: Props) {
             <input
               ref={searchRef}
               className="input text-sm"
-              placeholder="Search events…"
+              placeholder="Type event name to search…"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
             <div className="flex-1 overflow-y-auto space-y-1">
               {loadingEvents && (
@@ -114,10 +119,13 @@ export default function ImportFromEventModal({ onClose, onImport }: Props) {
                 </div>
               )}
               {eventsError && <p className="text-red-400 text-sm text-center py-6">{eventsError}</p>}
-              {!loadingEvents && !eventsError && filtered.length === 0 && (
-                <p className="text-gg-muted text-sm text-center py-6">No events found</p>
+              {!loadingEvents && !eventsError && search.length < 2 && (
+                <p className="text-gg-muted text-sm text-center py-10">Start typing to search events</p>
               )}
-              {filtered.map((ev) => (
+              {!loadingEvents && !eventsError && search.length >= 2 && events.length === 0 && (
+                <p className="text-gg-muted text-sm text-center py-6">No events found for &quot;{search}&quot;</p>
+              )}
+              {events.map((ev) => (
                 <button
                   key={ev.id}
                   onClick={() => selectEvent(ev)}
