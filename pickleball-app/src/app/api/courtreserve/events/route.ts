@@ -45,8 +45,15 @@ export async function GET(req: NextRequest) {
 
     const data = await res.json();
     console.log("Events response keys:", Object.keys(data ?? {}));
-    console.log("data.Data type:", typeof data?.Data, "isArray:", Array.isArray(data?.Data), "length:", Array.isArray(data?.Data) ? data.Data.length : "n/a");
-    const raw: Record<string, unknown>[] = Array.isArray(data?.Data) ? data.Data : [];
+    console.log("data.Data type:", typeof data?.Data, "isArray:", Array.isArray(data?.Data));
+    if (data?.Data && typeof data.Data === "object" && !Array.isArray(data.Data)) {
+      console.log("data.Data keys:", Object.keys(data.Data));
+      console.log("data.Data sample:", JSON.stringify(data.Data).slice(0, 400));
+    }
+    const raw: Record<string, unknown>[] = Array.isArray(data?.Data) ? data.Data
+      : Array.isArray(data?.Data?.Events) ? data.Data.Events
+      : Array.isArray(data?.Data?.Data) ? data.Data.Data
+      : [];
 
     console.log(`CourtReserve events: ${raw.length} total, searching "${q}"`);
 
