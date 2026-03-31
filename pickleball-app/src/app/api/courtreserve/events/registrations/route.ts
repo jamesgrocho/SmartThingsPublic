@@ -10,6 +10,21 @@ export interface CRRegistrant {
   lastName: string;
   email: string;
   memberNumber: string;
+  duprId: string;
+}
+
+function extractDuprFromRegistrant(r: Record<string, unknown>): string {
+  if (r.DuprId && String(r.DuprId).trim()) return String(r.DuprId).trim();
+  const udf = r.UserDefinedFields;
+  if (Array.isArray(udf)) {
+    for (const f of udf as Record<string, unknown>[]) {
+      const label = String(f.Label ?? f.Name ?? "").toLowerCase();
+      if (label.includes("dupr") && f.Value && String(f.Value).trim()) {
+        return String(f.Value).trim();
+      }
+    }
+  }
+  return "";
 }
 
 export async function GET(req: NextRequest) {
@@ -80,11 +95,13 @@ export async function GET(req: NextRequest) {
       if (seen.has(key)) continue;
       seen.add(key);
 
+      const duprId = extractDuprFromRegistrant(r);
       registrants.push({
         firstName,
         lastName,
         email: String(r.MemberEmail ?? r.Email ?? ""),
         memberNumber: String(r.MemberNumber ?? ""),
+        duprId,
       });
     }
 

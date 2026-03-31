@@ -13,6 +13,7 @@ interface CRRegistrant {
   lastName: string;
   email: string;
   memberNumber: string;
+  duprId: string;
 }
 
 interface Props {
@@ -85,7 +86,7 @@ export default function ImportFromEventModal({ onClose, onImport }: Props) {
   }
 
   function handleImport() {
-    onImport(registrants.map((r) => ({ firstName: r.firstName, lastName: r.lastName, duprId: "" })));
+    onImport(registrants.map((r) => ({ firstName: r.firstName, lastName: r.lastName, duprId: r.duprId ?? "" })));
     onClose();
   }
 
@@ -173,7 +174,14 @@ export default function ImportFromEventModal({ onClose, onImport }: Props) {
                         {r.firstName[0]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium">{r.firstName} {r.lastName}</div>
+                        <div className="text-sm font-medium flex items-center gap-2">
+                          {r.firstName} {r.lastName}
+                          {r.duprId && (
+                            <span className="text-xs font-mono bg-gg-green/10 text-gg-green border border-gg-green/20 rounded px-1.5 py-0.5">
+                              {r.duprId}
+                            </span>
+                          )}
+                        </div>
                         {r.email && <div className="text-xs text-gg-muted truncate">{r.email}</div>}
                       </div>
                     </div>

@@ -18,14 +18,20 @@ export default function TournamentActions({ tournamentId, status, playerCount }:
   async function start() {
     setLoading(true);
     setError("");
-    const res = await fetch(`/api/tournaments/${tournamentId}/start`, { method: "POST" });
-    setLoading(false);
-    if (!res.ok) {
-      const d = await res.json();
-      setError(d.error || "Failed to start");
-      return;
+    try {
+      const res = await fetch(`/api/tournaments/${tournamentId}/start`, { method: "POST" });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error || "Failed to start");
+        return;
+      }
+      router.push(`/tournaments/${tournamentId}/bracket`);
+      router.refresh();
+    } catch (e) {
+      setError(`Network error: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setLoading(false);
     }
-    router.push(`/tournaments/${tournamentId}/bracket`);
   }
 
   return (
