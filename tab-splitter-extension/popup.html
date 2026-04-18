@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tab Splitter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 220px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff;
+    }
+    h2 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 9px 12px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #1558b0; }
+    .shortcut {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+    kbd {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-family: inherit;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Tab Splitter</h2>
+  <button id="split">Split Tabs into Windows</button>
+  <p class="shortcut">or press <kbd>⌘</kbd><kbd>Shift</kbd><kbd>S</kbd></p>
+  <script src="popup.js"></script>
+</body>
+</html>

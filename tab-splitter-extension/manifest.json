@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Splitter",
+  "version": "1.0.0",
+  "description": "Split all tabs in the current window into separate windows spanning the desktop left to right.",
+  "permissions": ["tabs", "windows", "system.display"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Tab Splitter"
+  },
+  "commands": {
+    "split-tabs": {
+      "suggested_key": {
+        "mac": "Command+Shift+S",
+        "default": "Ctrl+Shift+S"
+      },
+      "description": "Split all tabs into separate windows"
+    }
+  }
+}
