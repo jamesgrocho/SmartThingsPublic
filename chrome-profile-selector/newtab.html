@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Selector</title>
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="title">Choose a Profile</h1>
+      <button class="btn-add" id="btnAdd">+ Add Profile</button>
+    </header>
+    <div class="grid" id="grid"></div>
+    <p class="empty-hint" id="emptyHint" style="display:none">
+      No profiles yet. Click <strong>+ Add Profile</strong> to get started.
+    </p>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Edit Profile</h2>
+      <div class="modal-body">
+        <label for="editName">Name</label>
+        <input type="text" id="editName" placeholder="Profile name" autocomplete="off">
+
+        <label for="editUrl">Launch URL <span class="label-hint">(opens when card is clicked)</span></label>
+        <input type="text" id="editUrl" placeholder="https://..." autocomplete="off">
+
+        <label for="editColor">Accent Color</label>
+        <input type="color" id="editColor" value="#4285f4">
+
+        <label>Card Image <span class="label-hint">(drag &amp; drop or click to upload)</span></label>
+        <div class="image-drop-zone" id="editImageDrop" tabindex="0" role="button" aria-label="Upload card image">
+          <img id="editImagePreview" src="" alt="Profile image preview" style="display:none">
+          <div class="image-drop-inner" id="editImageText">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span>Drop an image or click to upload</span>
+          </div>
+          <button class="btn-remove-img" id="btnRemoveImg" style="display:none" title="Remove image">✕ Remove image</button>
+          <input type="file" id="editImageFile" accept="image/*" style="display:none">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btnCancel">Cancel</button>
+        <button class="btn-save" id="btnSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="newtab.js"></script>
+</body>
+</html>
